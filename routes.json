@@ -2,7 +2,6 @@
     "routes": {
       "/": "/index.html",
       "/main": "/main.html",
-      "/about": "/pages/about.html",
       "/test": "/pages/test.html"
     }
   }
