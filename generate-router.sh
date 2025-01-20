@@ -15,6 +15,12 @@ function handler(event) {
     if (Object.prototype.hasOwnProperty.call(routes, uri)) {
         request.uri = routes[uri];
     }
+    else {
+        // .html로 끝나지 않는 경우에만 404 페이지로 리다이렉트
+        if (!uri.endsWith('.html')) {
+            request.uri = '/404.html';
+        }
+    }
     
     return request;
 }
