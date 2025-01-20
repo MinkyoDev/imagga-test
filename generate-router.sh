@@ -9,10 +9,10 @@ function handler(event) {
     var uri = request.uri;
     
     // 라우팅 규칙
-    const routes = $routes;
+    var routes = $routes;
     
     // 정의된 라우트가 있으면 해당 경로로 변환
-    if (routes.hasOwnProperty(uri)) {
+    if (Object.prototype.hasOwnProperty.call(routes, uri)) {
         request.uri = routes[uri];
     }
     
