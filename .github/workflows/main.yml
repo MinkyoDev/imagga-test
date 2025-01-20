@@ -1,0 +1,54 @@
+name: Deploy Website
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-2
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Generate url-router.js
+        run: |
+          chmod +x generate-router.sh
+          ./generate-router.sh
+
+      - name: Upload files to S3
+        run: |
+          aws s3 sync src/ s3://imagga-kr-2025/
+
+      - name: Update CloudFront Function
+        run: |
+          FUNCTION_NAME="url_rewrite"
+          
+          # Get ETag of the current function
+          ETAG=$(aws cloudfront describe-function --name $FUNCTION_NAME --query 'ETag' --output text)
+          
+          # Update function code
+          aws cloudfront update-function \
+            --name $FUNCTION_NAME \
+            --if-match $ETAG \
+            --function-config "Comment=URL rewriter,Runtime=cloudfront-js-1.0" \
+            --function-code "fileb://url-router.js"
+          
+          # Publish the function
+          ETAG=$(aws cloudfront describe-function --name $FUNCTION_NAME --query 'ETag' --output text)
+          aws cloudfront publish-function --name $FUNCTION_NAME --if-match $ETAG
